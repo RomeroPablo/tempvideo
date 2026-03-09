@@ -5,6 +5,9 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HLS_DIR="$ROOT_DIR/hls"
 SOURCE_PORT="${SOURCE_PORT:-6100}"
 HTTP_PORT="${HTTP_PORT:-6500}"
+BIND_HOST="${BIND_HOST:-0.0.0.0}"
+ADVERTISE_HOST="${ADVERTISE_HOST:-$(hostname -I 2>/dev/null | awk '{print $1}')}"
+ADVERTISE_HOST="${ADVERTISE_HOST:-127.0.0.1}"
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -27,15 +30,15 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 cd "$ROOT_DIR"
-python3 -m http.server "$HTTP_PORT" --bind 0.0.0.0 >/tmp/relay_http.log 2>&1 &
+python3 -m http.server "$HTTP_PORT" --bind "$BIND_HOST" >/tmp/relay_http.log 2>&1 &
 HTTP_PID=$!
 
-echo "Relay server listening for source on tcp://0.0.0.0:${SOURCE_PORT}"
-echo "Browser sink URL: http://localhost:${HTTP_PORT}/player.html"
+echo "Relay server listening for source on tcp://${BIND_HOST}:${SOURCE_PORT}"
+echo "Browser sink URL: http://${ADVERTISE_HOST}:${HTTP_PORT}/player.html"
 echo
 
 ffmpeg -hide_banner -loglevel warning \
-  -i "tcp://0.0.0.0:${SOURCE_PORT}?listen=1" \
+  -i "tcp://${BIND_HOST}:${SOURCE_PORT}?listen=1" \
   -map 0:v:0 -an \
   -c:v libx264 -preset veryfast -tune zerolatency \
   -pix_fmt yuv420p -g 50 -keyint_min 50 -sc_threshold 0 \
