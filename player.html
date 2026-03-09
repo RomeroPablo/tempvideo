@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Relay Browser Sink</title>
+  <style>
+    body {
+      margin: 0;
+      background: #0d1117;
+      color: #e6edf3;
+      font-family: Arial, sans-serif;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+    }
+    .wrap {
+      width: min(960px, 94vw);
+    }
+    video {
+      width: 100%;
+      background: #000;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+    }
+    p {
+      line-height: 1.4;
+    }
+    code {
+      background: #161b22;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Relay sink (browser)</h1>
+    <video id="video" controls autoplay muted playsinline></video>
+    <p>
+      Source sends video to relay server over TCP.
+      Relay serves browser sink over HLS at <code>/hls/stream.m3u8</code>.
+    </p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script>
+    const video = document.getElementById("video");
+    const src = "/hls/stream.m3u8";
+
+    if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      video.src = src;
+    } else if (window.Hls && Hls.isSupported()) {
+      const hls = new Hls({
+        liveDurationInfinity: true,
+        lowLatencyMode: true
+      });
+      hls.loadSource(src);
+      hls.attachMedia(video);
+    } else {
+      const note = document.createElement("p");
+      note.textContent = "Your browser does not support HLS playback.";
+      document.body.appendChild(note);
+    }
+  </script>
+</body>
+</html>
